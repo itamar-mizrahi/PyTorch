@@ -22,4 +22,5 @@ def test_dosomething():
     # Test case 2: valuetocheck is not greater than 4
     dosomething(3)
 
-test_dosomething()
+if __name__ == '__main__':
+    test_dosomething()
