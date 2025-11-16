@@ -267,6 +267,124 @@
 #     print(f"הניבוי (סיווג): \n{Y_predicted_class.view(-1)}")
 #     print(f"\nדיוק (Accuracy): {accuracy.item():.4f}")
 
+# import torch
+# import torch.nn as nn
+# import torch.optim as optim
+# import torchvision
+# import torchvision.transforms as transforms
+# from torch.utils.data import DataLoader
+
+# # --- 1. הגדרת טרנספורמציות וטעינת הנתונים ---
+
+# # נגדיר אילו שינויים לעשות לתמונות כשהן נטענות
+# # 1. להפוך אותן לטנזורים
+# # 2. לנרמל את ערכי הפיקסלים (עוזר לאימון)
+# transform = transforms.Compose(
+#     [transforms.ToTensor(),
+#      transforms.Normalize((0.5,), (0.5,))])
+
+# # טעינת נתוני האימון (60,000 תמונות)
+# # PyTorch יוריד אותם אוטומטית אם צריך
+# trainset = torchvision.datasets.MNIST(root='./data', train=True,
+#                                         download=True, transform=transform)
+# # יצירת 'טוען נתונים' שיגיש לנו מנות של 64 תמונות כל פעם
+# trainloader = DataLoader(trainset, batch_size=64, shuffle=True)
+
+# # טעינת נתוני הבדיקה (10,000 תמונות)
+# testset = torchvision.datasets.MNIST(root='./data', train=False,
+#                                        download=True, transform=transform)
+# testloader = DataLoader(testset, batch_size=64, shuffle=False)
+
+# # --- 2. הגדרת המודל (רשת CNN) ---
+# # זו הדרך המודרנית להגדיר מודלים מורכבים - באמצעות 'class'
+# class Net(nn.Module):
+#     def __init__(self):
+#         super(Net, self).__init__()
+#         # שכבת קונבולוציה ראשונה
+#         self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=5, padding=2)
+#         self.relu1 = nn.ReLU()
+#         self.pool1 = nn.MaxPool2d(kernel_size=2)
+        
+#         # שכבת קונבולוציה שנייה
+#         self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, padding=2)
+#         self.relu2 = nn.ReLU()
+#         self.pool2 = nn.MaxPool2d(kernel_size=2)
+        
+#         # שכבה ליניארית (רגילה)
+#         # התמונות התחילו ב-28x28, עברו 2 'pool' (28->14->7)
+#         # אז הגודל הוא 7x7, ויש 32 פילטרים
+#         self.fc1 = nn.Linear(32 * 7 * 7, 10) # 10 יציאות, אחת לכל ספרה (0-9)
+
+#     def forward(self, x):
+#         # הגדרת ה"זרימה" (flow) של הנתונים במודל
+#         x = self.pool1(self.relu1(self.conv1(x)))
+#         x = self.pool2(self.relu2(self.conv2(x)))
+        
+#         # "לשטח" את התמונה (מ-7x7x32) לווקטור ארוך
+#         x = x.view(-1, 32 * 7 * 7)
+        
+#         x = self.fc1(x)
+#         return x
+
+# model = Net() # יצירת מופע של המודל
+
+# # --- 3. הגדרת כלי העבודה ---
+# # פונקציית הפסד חדשה, מתאימה לסיווג עם 10 קטגוריות
+# loss_function = nn.CrossEntropyLoss()
+# optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+
+# # --- 4. לולאת האימון ---
+# n_epochs = 3  # 3 סיבובים על כל נתוני האימון יספיקו
+
+# print("--- מתחיל אימון ---")
+# for epoch in range(n_epochs):
+#     running_loss = 0.0
+#     # הלולאה הפנימית רצה עכשיו על ה-"מנות" (batches)
+#     for i, data in enumerate(trainloader, 0):
+#         # 'data' מכיל "מנה" של 64 תמונות והתוויות שלהן
+#         inputs, labels = data
+
+#         # 1. איפוס הנגזרות
+#         optimizer.zero_grad()
+
+#         # 2. הרצת המודל (קדימה)
+#         outputs = model(inputs)
+        
+#         # 3. חישוב הטעות
+#         loss = loss_function(outputs, labels)
+        
+#         # 4. חישוב הנגזרות (אחורה)
+#         loss.backward()
+        
+#         # 5. עדכון המשקולות
+#         optimizer.step()
+
+#         # הדפסת סטטיסטיקה
+#         running_loss += loss.item()
+#         if i % 200 == 199:    # הדפס כל 200 מנות
+#             print(f'[Epoch {epoch + 1}, Batch {i + 1}] Loss: {running_loss / 200:.3f}')
+#             running_loss = 0.0
+
+# print('--- אימון הסתיים ---')
+
+# # --- 5. בדיקת המודל על נתוני המבחן ---
+# correct = 0
+# total = 0
+# # לא צריך לחשב נגזרות בזמן הבדיקה
+# with torch.no_grad():
+#     for data in testloader:
+#         images, labels = data
+#         outputs = model(images)
+        
+#         # הניבוי הוא האינדקס עם הערך הגבוה ביותר
+#         _, predicted = torch.max(outputs.data, 1)
+        
+#         total += labels.size(0)
+#         correct += (predicted == labels).sum().item()
+
+# accuracy = 100 * correct / total
+# print(f'\nדיוק (Accuracy) על 10,000 תמונות המבחן: {accuracy:.2f} %')
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -276,32 +394,31 @@ from torch.utils.data import DataLoader
 
 # --- 1. הגדרת טרנספורמציות וטעינת הנתונים ---
 
-# נגדיר אילו שינויים לעשות לתמונות כשהן נטענות
-# 1. להפוך אותן לטנזורים
-# 2. לנרמל את ערכי הפיקסלים (עוזר לאימון)
+# שינוי בנרמול: עכשיו יש 3 ערכים (אחד לכל ערוץ RGB)
 transform = transforms.Compose(
     [transforms.ToTensor(),
-     transforms.Normalize((0.5,), (0.5,))])
+     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]) # <-- שינוי
 
-# טעינת נתוני האימון (60,000 תמונות)
-# PyTorch יוריד אותם אוטומטית אם צריך
-trainset = torchvision.datasets.MNIST(root='./data', train=True,
-                                        download=True, transform=transform)
-# יצירת 'טוען נתונים' שיגיש לנו מנות של 64 תמונות כל פעם
+# טעינת נתוני האימון (CIFAR-10)
+trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                        download=True, transform=transform) # <-- שינוי
 trainloader = DataLoader(trainset, batch_size=64, shuffle=True)
 
-# טעינת נתוני הבדיקה (10,000 תמונות)
-testset = torchvision.datasets.MNIST(root='./data', train=False,
-                                       download=True, transform=transform)
+# טעינת נתוני הבדיקה (CIFAR-10)
+testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                       download=True, transform=transform) # <-- שינוי
 testloader = DataLoader(testset, batch_size=64, shuffle=False)
 
+# אלה 10 הקטגוריות שלנו
+classes = ('plane', 'car', 'bird', 'cat', 'deer', 
+           'dog', 'frog', 'horse', 'ship', 'truck')
+
 # --- 2. הגדרת המודל (רשת CNN) ---
-# זו הדרך המודרנית להגדיר מודלים מורכבים - באמצעות 'class'
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        # שכבת קונבולוציה ראשונה
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=5, padding=2)
+        # שכבת קונבולוציה ראשונה: מקבלת 3 ערוצים (צבע)
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=5, padding=2) # <-- שינוי
         self.relu1 = nn.ReLU()
         self.pool1 = nn.MaxPool2d(kernel_size=2)
         
@@ -311,17 +428,16 @@ class Net(nn.Module):
         self.pool2 = nn.MaxPool2d(kernel_size=2)
         
         # שכבה ליניארית (רגילה)
-        # התמונות התחילו ב-28x28, עברו 2 'pool' (28->14->7)
-        # אז הגודל הוא 7x7, ויש 32 פילטרים
-        self.fc1 = nn.Linear(32 * 7 * 7, 10) # 10 יציאות, אחת לכל ספרה (0-9)
+        # התמונות התחילו ב-32x32, עברו 2 'pool' (32->16->8)
+        # אז הגודל הוא 8x8, ויש 32 פילטרים
+        self.fc1 = nn.Linear(32 * 8 * 8, 10) # 10 יציאות, אחת לכל קטגוריה
 
     def forward(self, x):
-        # הגדרת ה"זרימה" (flow) של הנתונים במודל
         x = self.pool1(self.relu1(self.conv1(x)))
         x = self.pool2(self.relu2(self.conv2(x)))
         
-        # "לשטח" את התמונה (מ-7x7x32) לווקטור ארוך
-        x = x.view(-1, 32 * 7 * 7)
+        # "לשטח" את התמונה (מ-8x8x32) לווקטור ארוך
+        x = x.view(-1, 32 * 8 * 8)
         
         x = self.fc1(x)
         return x
@@ -329,37 +445,24 @@ class Net(nn.Module):
 model = Net() # יצירת מופע של המודל
 
 # --- 3. הגדרת כלי העבודה ---
-# פונקציית הפסד חדשה, מתאימה לסיווג עם 10 קטגוריות
 loss_function = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
 # --- 4. לולאת האימון ---
-n_epochs = 3  # 3 סיבובים על כל נתוני האימון יספיקו
+n_epochs = 5  # נתחיל עם 5 סיבובים. זה ייקח כמה דקות
 
-print("--- מתחיל אימון ---")
+print("--- מתחיל אימון (זה ייקח זמן) ---")
 for epoch in range(n_epochs):
     running_loss = 0.0
-    # הלולאה הפנימית רצה עכשיו על ה-"מנות" (batches)
     for i, data in enumerate(trainloader, 0):
-        # 'data' מכיל "מנה" של 64 תמונות והתוויות שלהן
         inputs, labels = data
 
-        # 1. איפוס הנגזרות
         optimizer.zero_grad()
-
-        # 2. הרצת המודל (קדימה)
         outputs = model(inputs)
-        
-        # 3. חישוב הטעות
         loss = loss_function(outputs, labels)
-        
-        # 4. חישוב הנגזרות (אחורה)
         loss.backward()
-        
-        # 5. עדכון המשקולות
         optimizer.step()
 
-        # הדפסת סטטיסטיקה
         running_loss += loss.item()
         if i % 200 == 199:    # הדפס כל 200 מנות
             print(f'[Epoch {epoch + 1}, Batch {i + 1}] Loss: {running_loss / 200:.3f}')
@@ -370,15 +473,11 @@ print('--- אימון הסתיים ---')
 # --- 5. בדיקת המודל על נתוני המבחן ---
 correct = 0
 total = 0
-# לא צריך לחשב נגזרות בזמן הבדיקה
 with torch.no_grad():
     for data in testloader:
         images, labels = data
         outputs = model(images)
-        
-        # הניבוי הוא האינדקס עם הערך הגבוה ביותר
         _, predicted = torch.max(outputs.data, 1)
-        
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
