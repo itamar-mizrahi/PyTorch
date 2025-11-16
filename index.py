@@ -385,101 +385,151 @@
 # accuracy = 100 * correct / total
 # print(f'\nדיוק (Accuracy) על 10,000 תמונות המבחן: {accuracy:.2f} %')
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torchvision
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
+# import torch
+# import torch.nn as nn
+# import torch.optim as optim
+# import torchvision
+# import torchvision.transforms as transforms
+# from torch.utils.data import DataLoader
 
-# --- 1. הגדרת טרנספורמציות וטעינת הנתונים ---
+# # --- 1. הגדרת טרנספורמציות וטעינת הנתונים ---
 
-# שינוי בנרמול: עכשיו יש 3 ערכים (אחד לכל ערוץ RGB)
-transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]) # <-- שינוי
+# # שינוי בנרמול: עכשיו יש 3 ערכים (אחד לכל ערוץ RGB)
+# transform = transforms.Compose(
+#     [transforms.ToTensor(),
+#      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]) # <-- שינוי
 
-# טעינת נתוני האימון (CIFAR-10)
-trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                        download=True, transform=transform) # <-- שינוי
-trainloader = DataLoader(trainset, batch_size=64, shuffle=True)
+# # טעינת נתוני האימון (CIFAR-10)
+# trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+#                                         download=True, transform=transform) # <-- שינוי
+# trainloader = DataLoader(trainset, batch_size=64, shuffle=True)
 
-# טעינת נתוני הבדיקה (CIFAR-10)
-testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                       download=True, transform=transform) # <-- שינוי
-testloader = DataLoader(testset, batch_size=64, shuffle=False)
+# # טעינת נתוני הבדיקה (CIFAR-10)
+# testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+#                                        download=True, transform=transform) # <-- שינוי
+# testloader = DataLoader(testset, batch_size=64, shuffle=False)
 
-# אלה 10 הקטגוריות שלנו
-classes = ('plane', 'car', 'bird', 'cat', 'deer', 
-           'dog', 'frog', 'horse', 'ship', 'truck')
+# # אלה 10 הקטגוריות שלנו
+# classes = ('plane', 'car', 'bird', 'cat', 'deer', 
+#            'dog', 'frog', 'horse', 'ship', 'truck')
 
-# --- 2. הגדרת המודל (רשת CNN) ---
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        # שכבת קונבולוציה ראשונה: מקבלת 3 ערוצים (צבע)
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=5, padding=2) # <-- שינוי
-        self.relu1 = nn.ReLU()
-        self.pool1 = nn.MaxPool2d(kernel_size=2)
+# # --- 2. הגדרת המודל (רשת CNN) ---
+# class Net(nn.Module):
+#     def __init__(self):
+#         super(Net, self).__init__()
+#         # שכבת קונבולוציה ראשונה: מקבלת 3 ערוצים (צבע)
+#         self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=5, padding=2) # <-- שינוי
+#         self.relu1 = nn.ReLU()
+#         self.pool1 = nn.MaxPool2d(kernel_size=2)
         
-        # שכבת קונבולוציה שנייה
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, padding=2)
-        self.relu2 = nn.ReLU()
-        self.pool2 = nn.MaxPool2d(kernel_size=2)
+#         # שכבת קונבולוציה שנייה
+#         self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, padding=2)
+#         self.relu2 = nn.ReLU()
+#         self.pool2 = nn.MaxPool2d(kernel_size=2)
         
-        # שכבה ליניארית (רגילה)
-        # התמונות התחילו ב-32x32, עברו 2 'pool' (32->16->8)
-        # אז הגודל הוא 8x8, ויש 32 פילטרים
-        self.fc1 = nn.Linear(32 * 8 * 8, 10) # 10 יציאות, אחת לכל קטגוריה
+#         # שכבה ליניארית (רגילה)
+#         # התמונות התחילו ב-32x32, עברו 2 'pool' (32->16->8)
+#         # אז הגודל הוא 8x8, ויש 32 פילטרים
+#         self.fc1 = nn.Linear(32 * 8 * 8, 10) # 10 יציאות, אחת לכל קטגוריה
 
-    def forward(self, x):
-        x = self.pool1(self.relu1(self.conv1(x)))
-        x = self.pool2(self.relu2(self.conv2(x)))
+#     def forward(self, x):
+#         x = self.pool1(self.relu1(self.conv1(x)))
+#         x = self.pool2(self.relu2(self.conv2(x)))
         
-        # "לשטח" את התמונה (מ-8x8x32) לווקטור ארוך
-        x = x.view(-1, 32 * 8 * 8)
+#         # "לשטח" את התמונה (מ-8x8x32) לווקטור ארוך
+#         x = x.view(-1, 32 * 8 * 8)
         
-        x = self.fc1(x)
-        return x
+#         x = self.fc1(x)
+#         return x
 
-model = Net() # יצירת מופע של המודל
+# model = Net() # יצירת מופע של המודל
 
-# --- 3. הגדרת כלי העבודה ---
-loss_function = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+# # --- 3. הגדרת כלי העבודה ---
+# loss_function = nn.CrossEntropyLoss()
+# optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
-# --- 4. לולאת האימון ---
-n_epochs = 5  # נתחיל עם 5 סיבובים. זה ייקח כמה דקות
+# # --- 4. לולאת האימון ---
+# n_epochs = 5  # נתחיל עם 5 סיבובים. זה ייקח כמה דקות
 
-print("--- מתחיל אימון (זה ייקח זמן) ---")
-for epoch in range(n_epochs):
-    running_loss = 0.0
-    for i, data in enumerate(trainloader, 0):
-        inputs, labels = data
+# print("--- מתחיל אימון (זה ייקח זמן) ---")
+# for epoch in range(n_epochs):
+#     running_loss = 0.0
+#     for i, data in enumerate(trainloader, 0):
+#         inputs, labels = data
 
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = loss_function(outputs, labels)
-        loss.backward()
-        optimizer.step()
+#         optimizer.zero_grad()
+#         outputs = model(inputs)
+#         loss = loss_function(outputs, labels)
+#         loss.backward()
+#         optimizer.step()
 
-        running_loss += loss.item()
-        if i % 200 == 199:    # הדפס כל 200 מנות
-            print(f'[Epoch {epoch + 1}, Batch {i + 1}] Loss: {running_loss / 200:.3f}')
-            running_loss = 0.0
+#         running_loss += loss.item()
+#         if i % 200 == 199:    # הדפס כל 200 מנות
+#             print(f'[Epoch {epoch + 1}, Batch {i + 1}] Loss: {running_loss / 200:.3f}')
+#             running_loss = 0.0
 
-print('--- אימון הסתיים ---')
+# print('--- אימון הסתיים ---')
 
-# --- 5. בדיקת המודל על נתוני המבחן ---
-correct = 0
-total = 0
-with torch.no_grad():
-    for data in testloader:
-        images, labels = data
-        outputs = model(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
+# # --- 5. בדיקת המודל על נתוני המבחן ---
+# correct = 0
+# total = 0
+# with torch.no_grad():
+#     for data in testloader:
+#         images, labels = data
+#         outputs = model(images)
+#         _, predicted = torch.max(outputs.data, 1)
+#         total += labels.size(0)
+#         correct += (predicted == labels).sum().item()
 
-accuracy = 100 * correct / total
-print(f'\nדיוק (Accuracy) על 10,000 תמונות המבחן: {accuracy:.2f} %')
+# accuracy = 100 * correct / total
+# print(f'\nדיוק (Accuracy) על 10,000 תמונות המבחן: {accuracy:.2f} %')
+
+
+import cv2
+import mediapipe as mp
+import time
+
+# --- 1. אתחול הכלים של MEDIAPIPE ---
+mp_pose = mp.solutions.pose         # ה"מודל" של זיהוי התנוחה
+mp_drawing = mp.solutions.drawing_utils # כלי עזר לציור השלד
+pose = mp_pose.Pose(static_image_mode=True, min_detection_confidence=0.5)
+
+print("כלים טעונים. קורא תמונה...")
+
+# --- 2. טעינה ועיבוד התמונה ---
+# נטען את התמונה באמצעות OpenCV
+image = cv2.imread('image.jpg')
+
+# MediaPipe אוהב תמונות RGB, אבל OpenCV קורא אותן כ-BGR, אז נמיר
+image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+# זהו! הרצת המודל על התמונה
+results = pose.process(image_rgb)
+
+# --- 3. ציור התוצאות על התמונה ---
+if results.pose_landmarks:
+    print("זיהינו תנוחה! מצייר את השלד...")
+    
+    # 'results.pose_landmarks' מכיל את כל 33 הנקודות
+    # בוא נדפיס רק את הקואורדינטות של האף (נקודה 0) בשביל הכיף
+    nose_landmark = results.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE]
+    print(f"קואורדינטות האף (x, y, z): {nose_landmark.x}, {nose_landmark.y}, {nose_landmark.z}")
+
+    # נשתמש בכלי העזר כדי לצייר את כל השלד על התמונה המקורית (לא ה-RGB)
+    mp_drawing.draw_landmarks(
+        image=image,
+        landmark_list=results.pose_landmarks,
+        connections=mp_pose.POSE_CONNECTIONS)
+else:
+    print("לא הצלחנו לזהות תנוחה בתמונה.")
+
+# --- 4. שמירת התוצאה ---
+# במקום להציג בחלון, נשמור את התמונה החדשה כקובץ
+output_filename = 'output_image.jpg'
+cv2.imwrite(output_filename, image)
+
+print(f"\n--- סיימנו! ---")
+print(f"פתחו את הקובץ '{output_filename}' כדי לראות את התוצאה.")
+
+# ניקוי
+pose.close()
