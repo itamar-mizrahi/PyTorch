@@ -2,3 +2,13 @@
 .venv/
 __pycache__/
 *.pyc
+
+# Data files / folders (datasets)
+data/
+datasets/
+*.csv
+*.tsv
+*.pt
+*.pth
+*.h5
+*.npz
