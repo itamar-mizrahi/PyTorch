@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from PIL import Image
+import os
 
 # כותרת האפליקציה
 st.title("🧠 מזהה התמונות החכם שלי")
@@ -24,10 +25,13 @@ if uploaded_file is not None:
             # (אנחנו צריכים "לאפס" את הקובץ לתחילתו כדי לקרוא ממנו שוב)
             uploaded_file.seek(0)
             files = {'image': uploaded_file.getvalue()}
+            local_url = "http://localhost:5000/predict"
+            API_URL = os.getenv("API_URL", local_url)
             
+            st.write(f"מתחבר לשרת: `{API_URL}`") # (אופציונלי: כדי שתראה לאן זה הולך)
+            
+            response = requests.post(API_URL, files=files)
             # שליחת בקשה ל-API המקומי שלנו (שבתוך הדוקר)
-            response = requests.post("http://localhost:5000/predict", files=files)
-            
             # קבלת התשובה
             if response.status_code == 200:
                 result = response.json()
