@@ -1,0 +1,39 @@
+name: Python CI Checker
+
+# מתי להריץ את הרובוט? בכל דחיפה (push) לענף הראשי
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    # על איזו מערכת הפעלה לרוץ? (המחשב שגיטהאב נותן לנו)
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. הורד את הקוד מהריפוזיטורי
+    - uses: actions/checkout@v3
+
+    # 2. התקן פייתון בגרסה 3.11
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+
+    # 3. התקן כלי בדיקה (Flake8)
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8
+
+    # 4. הרץ את הבדיקה!
+    # זה בודק שגיאות תחביר (Syntax Errors) ולוגיקה שבורה
+    - name: Lint with flake8
+      run: |
+        # עצור אם יש שגיאות תחביר חמורות
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # תן אזהרות על סגנון כתיבה (אופציונלי)
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        

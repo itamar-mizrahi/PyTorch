@@ -1,41 +1,22 @@
-# Use an official Python runtime as a parent image
-# FROM python:3.11-slim
-
-# # Set the working directory in the container
-# WORKDIR /app
-
-# # Copy the requirements file into the container at /app
-# COPY requirements.txt .
-
-# # Install any needed packages specified in requirements.txt
-# RUN pip install --no-cache-dir -r requirements.txt
-
-# # Copy the rest of the application's code
-# COPY . .
-
-# # Expose the port the server runs on
-# EXPOSE 8000
-
-# # Define the command to run your application
-# CMD ["python", "server.py"]
-
-
-# 1. בחר תמונת בסיס של פייתון
 FROM python:3.11-slim
 
-# 2. הגדר את תיקיית העבודה בתוך הקונטיינר
+# 1. העתקת המתאם של AWS (השורה שהייתה חסרה!)
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
+
 WORKDIR /app
 
-# 3. העתק את רשימת הדרישות והתקן אותן
-# (העתקה בנפרד מנצלת את ה-cache של דוקר)
+# 2. התקנת PyTorch בגרסת CPU (כדי לחסוך מקום וזמן)
+RUN pip install --no-cache-dir torch==2.2.0 torchvision==0.17.0 --index-url https://download.pytorch.org/whl/cpu
+
+# 3. התקנת שאר הדרישות
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4. העתק את שאר קבצי הפרויקט (השרת והמודל)
+# 4. העתקת הקוד
 COPY . .
 
-# 5. חשוף את הפורט שהשרת מאזין לו
-EXPOSE 5000
+# 5. הגדרת הפורט עבור המתאם
+ENV PORT=5000
 
-# 6. הגדר את הפקודה שתרוץ כשהקונטיינר יתחיל
+# 6. הרצת השרת
 CMD ["python3", "server.py"]
