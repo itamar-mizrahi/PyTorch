@@ -203,35 +203,54 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
+import os
+from pymongo import MongoClient
 
 app = Flask(__name__)
-# מאפשר לכל דפדפן (כולל הטלפון שלך) לשלוח בקשות
 CORS(app)
 
-# "מסד נתונים" בזיכרון (יימחק אם השרת יעשה ריסטרט, אבל מעולה להתחלה)
-workout_log = []
+# --- חיבור למסד הנתונים ---
+# קריאת כתובת החיבור ממשתני הסביבה
+MONGO_URI = os.getenv("MONGO_URI")
+
+# חיבור למונגו (אם אין כתובת, נדפיס שגיאה)
+if not MONGO_URI:
+    print("❌ Error: MONGO_URI is missing!")
+    client = None
+    db = None
+else:
+    try:
+        client = MongoClient(MONGO_URI)
+        db = client.get_database("fitness_db") # שם בסיס הנתונים
+        collection = db.get_collection("workouts") # שם ה'טבלה'
+        print("✅ Connected to MongoDB!")
+    except Exception as e:
+        print(f"❌ MongoDB Connection Error: {e}")
+        client = None
 
 @app.route('/')
 def home():
-    return "Fitness Logger is Running! 🏋️‍♂️"
+    return "Fitness Logger (with MongoDB) is Running! 🍃"
 
 @app.route('/save_workout', methods=['POST'])
 def save_workout():
+    if not client:
+        return jsonify({"error": "Database not connected"}), 500
+
     try:
-        # קבלת הנתונים
         data = request.json
-        count = data.get('reps', 0)
-        
-        # יצירת רשומה
         entry = {
             'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'reps': count
+            'reps': data.get('reps', 0)
         }
         
-        # שמירה
-        workout_log.append(entry)
-        print(f"🔥 New entry: {entry}")
+        # שמירה במסד הנתונים האמיתי!
+        collection.insert_one(entry)
         
+        # מחיקת ה-id הפנימי של מונגו לפני ההחזרה (כי הוא לא json רגיל)
+        entry.pop('_id', None)
+        
+        print(f"🔥 Saved to DB: {entry}")
         return jsonify({"status": "success", "saved_entry": entry})
         
     except Exception as e:
@@ -239,7 +258,13 @@ def save_workout():
 
 @app.route('/history', methods=['GET'])
 def get_history():
-    return jsonify(workout_log)
+    if not client:
+        return jsonify([])
+
+    # שליפת כל הנתונים מהמסד (בסדר יורד - החדש ביותר ראשון)
+    # ה- { '_id': 0 } אומר לו לא להחזיר את המזהה הפנימי המוזר של מונגו
+    workouts = list(collection.find({}, {'_id': 0}).sort("timestamp", -1))
+    return jsonify(workouts)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
